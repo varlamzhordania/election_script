@@ -241,23 +241,20 @@ if connection is None:
 cursor = connection.cursor()
 
 try:
-    while True:
-        # Make API call
-        api_data = get_api_data(api_endpoint)
+    # Make API call
+    api_data = get_api_data(api_endpoint)
 
-        if api_data:
-            # Insert data into the database for each table
-            insert_election_data(cursor, api_data)
-            insert_updates_data(cursor, api_data)
-            insert_voter_data(cursor, api_data)
+    if api_data:
+        # Insert data into the database for each table
+        insert_election_data(cursor, api_data)
+        insert_updates_data(cursor, api_data)
+        insert_voter_data(cursor, api_data)
 
-            print("Data inserted into the database.")
-
-        # Wait for a specific duration before making the next API call
-        time.sleep(60)  # Adjust the time interval as needed
-
+        print("Data inserted into the database.")
 except KeyboardInterrupt:
     print("Script terminated by user.")
+except Exception as e:
+    print("Error : ", e)
 finally:
     # Close the database connection
     connection.close()
