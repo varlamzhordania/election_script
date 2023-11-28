@@ -5,8 +5,12 @@ import time
 
 
 # Function to make API call
-def get_api_data(api_url):
-    response = requests.get(api_url)
+def get_api_data(api_url, token):
+    response = requests.get(
+        api_url, headers={
+            "Authorization": f"Token {token}"
+        }
+    )
     if response.status_code == 200:
         return response.json()
     else:
@@ -18,10 +22,10 @@ def get_api_data(api_url):
 def connect_to_database():
     try:
         connection = mysql.connector.connect(
-            host='your_mysql_host',
-            user='your_mysql_user',
-            password='your_mysql_password',
-            database='your_mysql_database'
+            host='eguide.pw',
+            user='eguisvca_vzdev',
+            password='KxuV1pWoonCjq',
+            database='eguisvca_vzdev'
         )
         return connection
     except mysql.connector.Error as err:
@@ -231,7 +235,8 @@ def insert_voter_data(cursor, data):
 
 
 # Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
-api_endpoint = 'YOUR_API_ENDPOINT'
+api_endpoint = 'https://electionguide.org/api/v2/elections_demo/'
+api_token = 'defad26f5b65919a9fbcd545c9a78a903dafd7d6'
 
 # Connect to MySQL database
 connection = connect_to_database()
@@ -242,13 +247,14 @@ cursor = connection.cursor()
 
 try:
     # Make API call
-    api_data = get_api_data(api_endpoint)
+    api_data = get_api_data(api_endpoint, api_token)
 
     if api_data:
-        # Insert data into the database for each table
-        insert_election_data(cursor, api_data)
-        insert_updates_data(cursor, api_data)
-        insert_voter_data(cursor, api_data)
+        for object in api_data:
+            # Insert data into the database for each table
+            insert_election_data(cursor, object)
+            insert_updates_data(cursor, object)
+            insert_voter_data(cursor, object)
 
         print("Data inserted into the database.")
 except KeyboardInterrupt:
