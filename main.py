@@ -22,10 +22,10 @@ def get_api_data(api_url, token):
 def connect_to_database():
     try:
         connection = mysql.connector.connect(
-            host='eguide.pw',
-            user='eguisvca_vzdev',
-            password='KxuV1pWoonCjq',
-            database='eguisvca_vzdev'
+            host='localhost',
+            user='root',
+            password='',
+            database='election'
         )
         return connection
     except mysql.connector.Error as err:
@@ -45,35 +45,50 @@ def data_exists(cursor, table_name, unique_field, unique_value):
 
 
 # Function to insert data into MySQL database for the government table
+# Function to insert data into MySQL database for the government table
 def insert_government_data(cursor, data):
-    if not data_exists(cursor, 'government', 'district_ocd_id', data['district']['district_ocd_id']):
+    district_ocd_id = data['district']['district_ocd_id']
+
+    cursor.execute(
+        '''
+        SELECT government_record_id FROM government WHERE district_ocd_id = %s
+        ''', (district_ocd_id,)
+    )
+
+    existing_record = cursor.fetchone()
+
+    if existing_record:
+        # If the row already exists, return the existing government_record_id
+        return existing_record[0]
+    else:
+        # If the row doesn't exist, insert a new row and return the auto-incremented government_record_id
         cursor.execute(
             '''
-                        INSERT INTO government (
-                            district_ocd_id,
-                            district_name,
-                            district_country,
-                            district_type,
-                            government_functions_details,
-                            government_functions_updated,
-                            concurrent_elections,
-                            institution_id,
-                            institution_name,
-                            institutiion_incumbency_allowed,
-                            insititution_term_length,
-                            insititution_term_limit,
-                            insititution_term_details,
-                            insititution_election_frequency,
-                            institution_compulsory_voting,
-                            prominent_political_groups_data,
-                            prominent_political_groups_comments,
-                            campaign_finance_legislation_exists,
-                            campaign_finance_details,
-                            official_results_data
-                        )
-                        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
-                    ''', (
-                data['district']['district_ocd_id'],
+            INSERT INTO government (
+                district_ocd_id,
+                district_name,
+                district_country,
+                district_type,
+                government_functions_details,
+                government_functions_updated,
+                concurrent_elections,
+                institution_id,
+                institution_name,
+                institutiion_incumbency_allowed,
+                insititution_term_length,
+                insititution_term_limit,
+                insititution_term_details,
+                insititution_election_frequency,
+                institution_compulsory_voting,
+                prominent_political_groups_data,
+                prominent_political_groups_comments,
+                campaign_finance_legislation_exists,
+                campaign_finance_details,
+                official_results_data
+            )
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+            ''', (
+                district_ocd_id,
                 data['district']['district_name'],
                 data['district']['district_country'],
                 data['district']['district_type'],
@@ -96,11 +111,12 @@ def insert_government_data(cursor, data):
             )
         )
 
+        # Return the auto-incremented government_record_id
+        return cursor.lastrowid
+
 
 # Function to insert data into MySQL database for the election table
-def insert_election_data(cursor, data):
-    government_record_id = insert_government_data(cursor, data)
-
+def insert_election_data(cursor, data, government_record_id):
     if not data_exists(cursor, 'election', 'election_id', data['election_id']):
         cursor.execute(
             '''
@@ -163,43 +179,69 @@ def insert_election_data(cursor, data):
                 data['third_party_verified']['date']
             )
         )
+        return cursor.lastrowid
+    else:
+        cursor.execute(
+            '''
+            SELECT election_record_id FROM election WHERE election_id = %s
+            ''', (data['election_id'],)
+        )
+        existing_record = cursor.fetchone()
+        return existing_record[0]
 
 
 # Function to insert data into MySQL database for the updates table
-def insert_updates_data(cursor, data):
-    cursor.execute(
-        '''
-                INSERT INTO updates (
-                    election_id,
-                    basic_updated,
-                    status_updated,
-                    voters_updated,
-                    institute_updated,
-                    events_updated,
-                    issues_updated,
-                    inforights_updated
-                )
-                VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-            ''', (
-            data['election_id'],
-            data['detail_updates']['basic_updated'],
-            data['detail_updates']['status_updated'],
-            data['detail_updates']['voters_updated'],
-            data['detail_updates']['institue_updated'],
-            data['detail_updates']['events_updated'],
-            data['detail_updates']['issues_updated'],
-            data['detail_updates']['inforights_updated']
+def insert_updates_data(cursor, data, election_record_id):
+    if not data_exists(cursor, 'updates', 'election_record_id', election_record_id):
+        cursor.execute(
+            '''
+                    INSERT INTO updates (
+                        election_record_id,
+                        basic_updated,
+                        status_updated,
+                        voters_updated,
+                        institute_updated,
+                        events_updated,
+                        issues_updated,
+                        inforights_updated
+                    )
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                ''', (
+                election_record_id,
+                data['detail_updates']['basic_updated'],
+                data['detail_updates']['status_updated'],
+                data['detail_updates']['voters_updated'],
+                data['detail_updates']['institue_updated'],
+                data['detail_updates']['events_updated'],
+                data['detail_updates']['issues_updated'],
+                data['detail_updates']['inforights_updated']
+            )
         )
-    )
 
 
 # Function to insert data into MySQL database for the voter table
-def insert_voter_data(cursor, data):
-    if not data_exists(cursor, 'voter', 'election_id', data['election_id']):
+def insert_voter_data(cursor, data, election_record_id):
+    if not data_exists(cursor, 'voter', 'election_record_id', election_record_id):
+        voting_methods = data['voting_methods']
+        voting_methods_type = ""
+        voting_methods_primary = ""
+        voting_methods_start_date = ""
+        voting_methods_end_date = ""
+        voting_methods_execuse_required = ""
+        voting_methods_instructions = ""
+        if voting_methods:
+            for method in voting_methods:
+                voting_methods_type += f"{method['type']};;"
+                voting_methods_primary += f"{method['primary']};;"
+                voting_methods_start_date += f"{method['start']};;"
+                voting_methods_end_date += f"{method['end']};;"
+                voting_methods_execuse_required += f"{method['excuse-required']};;"
+                voting_methods_instructions += f"{method['instructions']};;"
+
         cursor.execute(
             '''
                         INSERT INTO voter (
-                            election_id,
+                            election_record_id,
                             historical_voter_turnout_data,
                             historical_voter_turnout_comments,
                             voter_registration_day,
@@ -216,7 +258,7 @@ def insert_voter_data(cursor, data):
                         )
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     ''', (
-                data['election_id'],
+                election_record_id,
                 data['historical_voter_turnout']['data'],
                 data['historical_voter_turnout']['comments'],
                 data['voter_registration_day'],
@@ -224,14 +266,42 @@ def insert_voter_data(cursor, data):
                 data['voting_age_minimum_inclusive'],
                 data['eligible_voters'],
                 data['first_time_voters'],
-                data['voting_methods'][0]['type'],  # Assuming only one voting method is present
-                data['voting_methods'][0]['primary'],
-                data['voting_methods'][0]['start'],
-                data['voting_methods'][0]['end'],
-                data['voting_methods'][0]['excuse-required'],
-                data['voting_methods'][0]['instructions']
+                voting_methods_type,
+                voting_methods_primary,
+                voting_methods_start_date,
+                voting_methods_end_date,
+                voting_methods_execuse_required,
+                voting_methods_instructions,
             )
         )
+
+
+def insert_candidate_data(cursor, data, election_record_id):
+    candidate_selection = data['candidate_selection']
+    candidate_declare_start_date = data['candidate_declare_start_date']
+    candidate_declare_end_date = data['candidate_declare_end_date']
+    election_candidate_filing_deadline = data['election_candidate_filing_deadline']
+    if not data_exists(cursor, 'candidate', 'election_record_id', election_record_id):
+        cursor.execute(
+            '''
+            INSERT INTO candidate (
+                election_record_id,
+                candidate_selectiion,
+                candidate_declare_start_date,
+                candidate_declare_end_date,
+                election_candidate_filing_deadline
+            )
+            VALUES (%s, %s, %s, %s, %s)
+            ''', (
+                election_record_id,
+                candidate_selection,
+                candidate_declare_start_date,
+                candidate_declare_end_date,
+                election_candidate_filing_deadline
+            )
+        )
+        # Return the auto-incremented candidate_record_id
+        return cursor.lastrowid
 
 
 # Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
@@ -252,9 +322,21 @@ try:
     if api_data:
         for object in api_data:
             # Insert data into the database for each table
-            insert_election_data(cursor, object)
-            insert_updates_data(cursor, object)
-            insert_voter_data(cursor, object)
+            print("==============")
+            print(f"starting insert government, election id : {object['election_id']}")
+            government_record_id = insert_government_data(cursor, object)
+            print("==============")
+            print(f"starting insert election, election id : {object['election_id']}")
+            election_record_id = insert_election_data(cursor, object, government_record_id)
+            print("==============")
+            print(f"starting insert updates, election id : {object['election_id']}")
+            insert_updates_data(cursor, object, election_record_id)
+            print("==============")
+            print(f"starting insert voter, election id : {object['election_id']}")
+            insert_voter_data(cursor, object, election_record_id)
+            print("==============")
+            print(f"starting insert candidate, election id : {object['election_id']}")
+            insert_candidate_data(cursor, object, election_record_id)
 
         print("Data inserted into the database.")
 except KeyboardInterrupt:
