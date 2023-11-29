@@ -1,7 +1,7 @@
 import requests
 import mysql.connector
 from mysql.connector import errorcode
-import time
+import time, json
 
 
 # Function to make API call
@@ -94,7 +94,7 @@ def insert_government_data(cursor, data):
                 data['district']['district_type'],
                 data['government_functions']['details'],
                 data['government_functions']['updated'],
-                data['concurrent_elections'],
+                json.dumps(data['concurrent_elections']),
                 0,  # Replace with the actual institution_id if available
                 data['institution']['name'],
                 data['institution']['incumbency_allowed'],
