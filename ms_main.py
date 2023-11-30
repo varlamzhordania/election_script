@@ -68,7 +68,7 @@ def insert_government_data(cursor, data):
                 institutiion_incumbency_allowed,
                 insititution_term_length,
                 insititution_term_limit,
-                insititution_term_details,
+                institution_term_details,
                 insititution_election_frequency,
                 institution_compulsory_voting,
                 prominent_political_groups_data,
@@ -223,7 +223,7 @@ def insert_voter_data(cursor, data, election_record_id):
                 voting_methods_primary += f"{method['primary']};;"
                 voting_methods_start_date += f"{method['start']};;"
                 voting_methods_end_date += f"{method['end']};;"
-                voting_methods_execuse_required += f"{method['excuse-required']};;"
+                voting_methods_excuse_required += f"{method['excuse-required']};;"
                 voting_methods_instructions += f"{method['instructions']};;"
 
         cursor.execute(
@@ -241,7 +241,7 @@ def insert_voter_data(cursor, data, election_record_id):
                             voting_methods_primary,
                             voting_methods_start_date,
                             voting_methods_end_date,
-                            voting_methods_execuse_required,
+                            voting_methods_excuse_required,
                             voting_methods_instructions
                         )
                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
@@ -258,7 +258,7 @@ def insert_voter_data(cursor, data, election_record_id):
                 voting_methods_primary,
                 voting_methods_start_date,
                 voting_methods_end_date,
-                voting_methods_execuse_required,
+                voting_methods_excuse_required,
                 voting_methods_instructions,
             )
         )
