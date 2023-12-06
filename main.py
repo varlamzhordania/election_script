@@ -75,10 +75,10 @@ def insert_government_data(cursor, data):
                 institution_id,
                 institution_name,
                 institution_incumbency_allowed,
-                insititution_term_length,
-                insititution_term_limit,
-                institution_term_details,
-                insititution_election_frequency,
+                institution_term_length,
+                institution_term_limit,
+                insitution_term_details,
+                institution_election_frequency,
                 institution_compulsory_voting,
                 prominent_political_groups_data,
                 prominent_political_groups_comments,
@@ -227,7 +227,7 @@ def insert_voter_data(cursor, data, election_record_id):
         voting_methods_primary = ""
         voting_methods_start_date = ""
         voting_methods_end_date = ""
-        voting_methods_execuse_required = ""
+        voting_methods_excuse_required = ""
         voting_methods_instructions = ""
         if voting_methods:
             for method in voting_methods:

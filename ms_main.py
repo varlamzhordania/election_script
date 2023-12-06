@@ -215,7 +215,7 @@ def insert_voter_data(cursor, data, election_record_id):
         voting_methods_primary = ""
         voting_methods_start_date = ""
         voting_methods_end_date = ""
-        voting_methods_execuse_required = ""
+        voting_methods_excuse_required = ""
         voting_methods_instructions = ""
         if voting_methods:
             for method in voting_methods:
