@@ -77,7 +77,7 @@ def insert_government_data(cursor, data):
                 institution_incumbency_allowed,
                 institution_term_length,
                 institution_term_limit,
-                insitution_term_details,
+                institution_term_details,
                 institution_election_frequency,
                 institution_compulsory_voting,
                 prominent_political_groups_data,
