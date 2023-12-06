@@ -65,7 +65,7 @@ def insert_government_data(cursor, data):
                 concurrent_elections,
                 institution_id,
                 institution_name,
-                institutiion_incumbency_allowed,
+                institution_incumbency_allowed,
                 insititution_term_length,
                 insititution_term_limit,
                 institution_term_details,
