@@ -1,7 +1,11 @@
 import requests
 import pyodbc
-import json
+import json,os
 from datetime import datetime
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 # Function to make API call
 def get_api_data(api_url, token):
@@ -16,25 +20,28 @@ def get_api_data(api_url, token):
         print(f"Error: Unable to fetch data from the API. Status code: {response.status_code}")
         return None
 
+
 # Function to connect to Microsoft SQL Server database
 def connect_to_database():
     try:
         connection = pyodbc.connect(
-            'DRIVER={SQL Server};'
-            'SERVER=localhost;'
-            'DATABASE=election;'
-            'UID=your_username;'
-            'PWD=your_password'
+            f'DRIVER={os.getenv("DRIVER")}'
+            f'SERVER={os.getenv("SERVER")}'
+            f'DATABASE={os.getenv("DATABASE")}'
+            f'UID={os.getenv("UID")}'
+            f'PWD={os.getenv("PWD")}'
         )
         return connection
     except pyodbc.Error as err:
         print(f"Error: {err}")
         return None
 
+
 # Function to check if data already exists in the table
 def data_exists(cursor, table_name, unique_field, unique_value):
     cursor.execute(f"SELECT * FROM {table_name} WHERE {unique_field} = ?", unique_value)
     return cursor.fetchone() is not None
+
 
 # Function to insert data into Microsoft SQL Server database for the government table
 def insert_government_data(cursor, data):
@@ -104,6 +111,7 @@ def insert_government_data(cursor, data):
 
         # Return the auto-incremented government_record_id
         return cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
+
 
 # Function to insert data into Microsoft SQL Server database for the election table
 def insert_election_data(cursor, data, government_record_id):
@@ -179,6 +187,7 @@ def insert_election_data(cursor, data, government_record_id):
         existing_record = cursor.fetchone()
         return existing_record[0]
 
+
 # Function to insert data into Microsoft SQL Server database for the updates table
 def insert_updates_data(cursor, data, election_record_id):
     if not data_exists(cursor, 'updates', 'election_record_id', election_record_id):
@@ -206,6 +215,7 @@ def insert_updates_data(cursor, data, election_record_id):
                 data['detail_updates']['inforights_updated']
             )
         )
+
 
 # Function to insert data into Microsoft SQL Server database for the voter table
 def insert_voter_data(cursor, data, election_record_id):
@@ -263,6 +273,7 @@ def insert_voter_data(cursor, data, election_record_id):
             )
         )
 
+
 def insert_candidate_data(cursor, data, election_record_id):
     candidate_selection = data['candidate_selection']
     candidate_declare_start_date = data['candidate_declare_start_date']
@@ -290,9 +301,10 @@ def insert_candidate_data(cursor, data, election_record_id):
         # Return the auto-incremented candidate_record_id
         return cursor.execute("SELECT SCOPE_IDENTITY()").fetchone()[0]
 
+
 # Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
 api_endpoint = 'https://electionguide.org/api/v2/elections_demo/'
-api_token = 'defad26f5b65919a9fbcd545c9a78a903dafd7d6'
+api_token = os.getenv('TOKEN')
 
 # Connect to Microsoft SQL Server database
 connection = connect_to_database()
