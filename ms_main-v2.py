@@ -1,8 +1,10 @@
-import requests
-import mysql.connector
-from mysql.connector import errorcode
+import pyodbc
 from datetime import datetime, timedelta
 import json
+import requests
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 # Function to make API call
@@ -19,28 +21,24 @@ def get_api_data(api_url, token):
         return None
 
 
-# Function to connect to MySQL database
+# Function to connect to Microsoft SQL Server database
 def connect_to_database():
     try:
-        connection = mysql.connector.connect(
-            host='localhost',
-            user='eguisvca_vzdev',
-            password='KxuV1pWoonCjq',
-            database='eguisvca_vzdev2'
+        connection = pyodbc.connect(
+            f'DRIVER={os.getenv("DRIVER")}'
+            f'SERVER={os.getenv("SERVER")}'
+            f'DATABASE={os.getenv("DATABASE")}'
+            f'UID={os.getenv("UID")}'
+            f'PWD={os.getenv("PWD")}'
         )
         return connection
-    except mysql.connector.Error as err:
-        if err.errno == errorcode.ER_ACCESS_DENIED_ERROR:
-            print("Error: Access denied. Check your MySQL credentials.")
-        elif err.errno == errorcode.ER_BAD_DB_ERROR:
-            print("Error: Database does not exist.")
-        else:
-            print(f"Error: {err}")
+    except pyodbc.Error as err:
+        print(f"Error: {err}")
         return None
 
 
 def data_exists_eguide_election(cursor, election_id):
-    cursor.execute("SELECT * FROM eguide_election WHERE election_id = %s", (election_id,))
+    cursor.execute("SELECT * FROM eguide_election WHERE election_id = ?", (election_id,))
     return cursor.fetchone() is not None
 
 
@@ -70,7 +68,9 @@ def insert_eguide_election_data(cursor, data):
             str(method.get('excuse-required', '')) if method.get('excuse-required') is not None else '' for method in
             data['voting_methods']
         )
-        voting_methods_instructions = '!!'.join(str(method.get('instructions', '')) for method in data['voting_methods'])
+        voting_methods_instructions = '!!'.join(
+            str(method.get('instructions', '')) for method in data['voting_methods']
+        )
 
     # Extracting specific fields from the JSON data
     election_data = {
@@ -107,7 +107,6 @@ def insert_eguide_election_data(cursor, data):
         'voting_methods_execuse_required': voting_methods_execuse_required,
         'voting_methods_instructions': voting_methods_instructions,
     }
-
 
     # Calculate election_range_end_date
     if election_data['election_range_start_date']:
@@ -153,46 +152,80 @@ def insert_eguide_election_data(cursor, data):
             voting_methods_instructions
         )
         VALUES (
-            %(election_id)s,
-            %(election_name_encode)s,
-            %(election_name)s,
-            %(election_date_updated)s,
-            %(election_issues)s,
-            %(is_snap_election)s,
-            %(original_election_year)s,
-            %(election_range_start_date)s,
-            %(election_range_end_date)s,
-            %(is_delayed_covid19)s,
-            %(covid_effects)s,
-            %(election_declared_start_date)s,
-            %(election_declared_end_date)s,
-            %(election_blackout_start_date)s,
-            %(election_blackout_end_date)s,
-            %(election_type)s,
-            %(election_scope)s,
-            %(electoral_system)s,
-            %(election_commission_name)s,
-            %(administring_election_commission_website)s,
-            %(government_functions)s,
-            %(government_functions_updated_date)s,
-            %(voter_registration_day_deadline)s,
-            %(voting_age_minimum_inclusive)s,
-            %(eligible_voters)s,
-            %(first_time_voters)s,
-            %(voting_methods_type)s,
-            %(voting_methods_primary)s,
-            %(voting_methods_start_date)s,
-            %(voting_methods_end_date)s,
-            %(voting_methods_execuse_required)s,
-            %(voting_methods_instructions)s
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?,
+            ?
         )
-        ''', election_data
+        ''', (
+            election_data['election_id'],
+            election_data['election_name_encode'],
+            election_data['election_name'],
+            election_data['election_date_updated'],
+            election_data['election_issues'],
+            election_data['is_snap_election'],
+            election_data['original_election_year'],
+            election_data['election_range_start_date'],
+            election_data['election_range_end_date'],
+            election_data['is_delayed_covid19'],
+            election_data['covid_effects'],
+            election_data['election_declared_start_date'],
+            election_data['election_declared_end_date'],
+            election_data['election_blackout_start_date'],
+            election_data['election_blackout_end_date'],
+            election_data['election_type'],
+            election_data['election_scope'],
+            election_data['electoral_system'],
+            election_data['election_commission_name'],
+            election_data['administring_election_commission_website'],
+            election_data['government_functions'],
+            election_data['government_functions_updated_date'],
+            election_data['voter_registration_day_deadline'],
+            election_data['voting_age_minimum_inclusive'],
+            election_data['eligible_voters'],
+            election_data['first_time_voters'],
+            election_data['voting_methods_type'],
+            election_data['voting_methods_primary'],
+            election_data['voting_methods_start_date'],
+            election_data['voting_methods_end_date'],
+            election_data['voting_methods_execuse_required'],
+            election_data['voting_methods_instructions']
+        )
     )
 
 
 # Replace 'YOUR_API_ENDPOINT' with the actual API endpoint
 api_endpoint = 'https://electionguide.org/api/v2/elections_demo/'
-api_token = 'defad26f5b65919a9fbcd545c9a78a903dafd7d6'
+api_token = os.getenv('TOKEN')
 
 # Connect to MySQL database
 connection = connect_to_database()

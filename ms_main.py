@@ -1,6 +1,6 @@
 import requests
 import pyodbc
-import json,os
+import json, os
 from datetime import datetime
 from dotenv import load_dotenv
 
