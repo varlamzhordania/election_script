@@ -70,7 +70,9 @@ def insert_eguide_election_data(cursor, data):
             str(method.get('excuse-required', '')) if method.get('excuse-required') is not None else '' for method in
             data['voting_methods']
         )
-        voting_methods_instructions = '!!'.join(str(method.get('instructions', '')) for method in data['voting_methods'])
+        voting_methods_instructions = '!!'.join(
+            str(method.get('instructions', '')) for method in data['voting_methods']
+        )
 
     # Extracting specific fields from the JSON data
     election_data = {
@@ -94,6 +96,11 @@ def insert_eguide_election_data(cursor, data):
         'electoral_system': data.get('electoral_system', ''),
         'election_commission_name': data.get('election_commission_name', ''),
         'administring_election_commission_website': data.get('administering_election_commission_website', ''),
+        'election_source': data.get('source', ''),
+        'district_ocd_id': data['district'].get("district_ocd_id"),
+        'district_name': data['district'].get("district_name"),
+        'district_country': data['district'].get("district_country"),
+        'district_type': data['district'].get("district_type"),
         'government_functions': data['government_functions'].get('details', ''),
         'government_functions_updated_date': data['government_functions'].get('updated', ''),
         'voter_registration_day_deadline': data.get('voter_registration_day', ''),
@@ -107,7 +114,6 @@ def insert_eguide_election_data(cursor, data):
         'voting_methods_execuse_required': voting_methods_execuse_required,
         'voting_methods_instructions': voting_methods_instructions,
     }
-
 
     # Calculate election_range_end_date
     if election_data['election_range_start_date']:
@@ -139,6 +145,11 @@ def insert_eguide_election_data(cursor, data):
             electoral_system,
             election_commission_name,
             administring_election_commission_website,
+            election_source,
+            district_ocd_id,
+            district_name,
+            district_country,
+            district_type,
             government_functions,
             government_functions_updated_date,
             voter_registration_day_deadline,
@@ -173,6 +184,11 @@ def insert_eguide_election_data(cursor, data):
             %(electoral_system)s,
             %(election_commission_name)s,
             %(administring_election_commission_website)s,
+            %(election_source)s,
+            %(district_ocd_id)s,
+            %(district_name)s,
+            %(district_country)s,
+            %(district_type)s,
             %(government_functions)s,
             %(government_functions_updated_date)s,
             %(voter_registration_day_deadline)s,
